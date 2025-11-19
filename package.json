@@ -1,0 +1,15 @@
+{
+  "name": "cypress-trello-practice",
+  "version": "1.0.0",
+  "description": "This is an automation practice",
+  "license": "ISC",
+  "author": "JB",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "runner": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^15.6.0"
+  }
+}
