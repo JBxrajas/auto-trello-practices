@@ -10,6 +10,7 @@
     "runner": "cypress run"
   },
   "devDependencies": {
-    "cypress": "^15.6.0"
+    "cypress": "^15.6.0",
+    "cypress-mochawesome-reporter": "^4.0.2"
   }
 }

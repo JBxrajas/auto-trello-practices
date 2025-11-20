@@ -15,6 +15,7 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+import 'cypress-mochawesome-reporter/register';
 
 // before(function() {
 //     // runs once before all tests in the block
