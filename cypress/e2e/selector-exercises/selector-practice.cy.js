@@ -43,7 +43,7 @@ describe('Find elements using different selector strategies',function(){
         cy.viewport(400, 400);
         cy.get('button').last().should('exist');
     });
-    it.only('Find an element and select by index',function(){
+    it('Find an element and select by index',function(){
         // Example: find all buttons and select by index
         cy.viewport(400, 400);
         cy.get('button').eq(2).should('exist');
