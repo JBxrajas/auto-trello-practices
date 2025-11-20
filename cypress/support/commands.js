@@ -23,3 +23,17 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+Cypress.Commands.add('NegativeLoginScenario',(email,password)=>{
+    cy.visit('https://trello.com');
+    cy.contains('Log in').click();
+    //Using Origin to handle cross-origin login
+    cy.origin ('https://id.atlassian.com/login', {args: {email, password}}, ({email, password}) => {
+    cy.get('#username-uid1').type(email);
+    cy.get('#login-submit').click();
+    cy.get('#password').should('be.visible');
+    cy.get('#password').type(password);
+    cy.get('#login-submit').click();
+    cy.get('div[data-testid="form-error--content"]').should('be.visible');
+    });
+});
