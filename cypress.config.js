@@ -7,7 +7,8 @@ module.exports = defineConfig({
     reportPageTitle: 'Cypress Practices Test Report',
     embeddedScreenshots: true,
     inlineAssets: true,
-    saveAllAttempts: false
+    saveAllAttempts: false,
+    autoOpen: true
   },
   e2e: {
     setupNodeEvents(on, config) {
