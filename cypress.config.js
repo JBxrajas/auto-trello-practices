@@ -1,21 +1,40 @@
 const { defineConfig } = require('cypress');
 const path = require('path');
+const fs = require('fs');
 
-// Explicitly load .env from this directory
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+const envPath = path.resolve(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+}
 
 module.exports = defineConfig({
   e2e: {
     baseUrl: 'https://trello.com',
+    
+    // Configure Mochawesome reporter
+    reporter: 'mochawesome',
+    reporterOptions: {
+      reportDir: 'cypress/reports',
+      overwrite: false,
+      html: false,
+      json: true,
+      timestamp: 'mmddyyyy_HHMMss',
+      reportFilename: '[status]_[datetime]-[name]-report',
+      quiet: true
+    },
+
     setupNodeEvents(on, config) {
       config.env.TRELLO_EMAIL = process.env.TRELLO_EMAIL;
       config.env.TRELLO_PASSWORD = process.env.TRELLO_PASSWORD;
       config.env.TRELLO_API_KEY = process.env.TRELLO_API_KEY;
       config.env.TRELLO_API_TOKEN = process.env.TRELLO_API_TOKEN;
 
-      // Debug: verify token is loaded correctly
-      console.log('Loading .env from:', path.resolve(__dirname, '.env'));
-      console.log('Loaded API Token:', process.env.TRELLO_API_TOKEN?.substring(0, 15) + '...');
+      console.log('Environment loaded:', {
+        hasEmail: !!process.env.TRELLO_EMAIL,
+        hasPassword: !!process.env.TRELLO_PASSWORD,
+        hasApiKey: !!process.env.TRELLO_API_KEY,
+        hasApiToken: !!process.env.TRELLO_API_TOKEN
+      });
 
       return config;
     },

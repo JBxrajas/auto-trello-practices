@@ -11,7 +11,7 @@ jobs:
   cypress-run:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false  
+      fail-fast: false
       matrix:
         browser: [chrome, firefox, edge, electron]
     
@@ -31,57 +31,73 @@ jobs:
       - name: Run Cypress in ${{ matrix.browser }}
         uses: cypress-io/github-action@v6
         env:
-          # Pass secrets as environment variables
           TRELLO_EMAIL: ${{ secrets.TRELLO_EMAIL }}
           TRELLO_PASSWORD: ${{ secrets.TRELLO_PASSWORD }}
           TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
           TRELLO_API_TOKEN: ${{ secrets.TRELLO_API_TOKEN }}
         with:
           browser: ${{ matrix.browser }}
-          # Remove 'command:' - cypress-io/github-action handles this
           headed: false
           config-file: cypress.config.js
-    
-      # Mochawesome setup needs dependencies installed first
-      - name: Install Mochawesome dependencies
-        run: npm install --save-dev mochawesome mochawesome-merge mochawesome-report-generator
 
-      # Merge JSON reports from all specs
+      # Check if reports exist before processing
+      - name: List generated reports
+        if: always()
+        run: |
+          echo "=== Checking for reports ==="
+          ls -la cypress/reports/ || echo "No reports directory found"
+          find cypress/reports -name "*.json" || echo "No JSON reports found"
+
+      # Create directory and merge reports (only if reports exist)
       - name: Merge Mochawesome reports
         if: always()
         run: |
-          npx mochawesome-merge cypress/reports/${{ matrix.browser }}/*.json > cypress/reports/${{ matrix.browser }}/merged-report.json
+          if [ -d "cypress/reports" ] && [ "$(find cypress/reports -name '*.json' | wc -l)" -gt 0 ]; then
+            mkdir -p cypress/reports/${{ matrix.browser }}
+            npx mochawesome-merge "cypress/reports/*.json" > cypress/reports/${{ matrix.browser }}/merged-report.json
+            echo "Reports merged successfully"
+          else
+            echo "No reports to merge - skipping"
+          fi
 
-      # Generate HTML report
+      # Generate HTML report (only if merged report exists)
       - name: Generate HTML Reports
         if: always()
         run: |
-          npx marge cypress/reports/${{ matrix.browser }}/merged-report.json \
-            --reportDir cypress/reports/${{ matrix.browser }} \
-            --reportFilename "${{ matrix.browser }}-report" \
-            --inline
+          if [ -f "cypress/reports/${{ matrix.browser }}/merged-report.json" ]; then
+            npx marge cypress/reports/${{ matrix.browser }}/merged-report.json \
+              --reportDir cypress/reports/${{ matrix.browser }} \
+              --reportFilename "${{ matrix.browser }}-report" \
+              --inline
+            echo "HTML report generated"
+          else
+            echo "No merged report found - skipping HTML generation"
+          fi
 
       - name: Upload HTML Reports
         uses: actions/upload-artifact@v4
-        if: always()  # Add this to upload even if tests fail
+        if: always()
         with:
-          name: cypress-report-${{ matrix.browser }}  # Fix: unique name per browser
+          name: cypress-report-${{ matrix.browser }}
           path: cypress/reports/${{ matrix.browser }}
           retention-days: 30
+          if-no-files-found: warn  # Don't fail if no reports
 
       - name: Upload screenshots on failure
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: cypress-screenshots-${{ matrix.browser }}  # Fix: unique name per browser
+          name: cypress-screenshots-${{ matrix.browser }}
           path: cypress/screenshots
           retention-days: 7
+          if-no-files-found: ignore  # Don't warn if no screenshots
 
       - name: Upload videos
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cypress-videos-${{ matrix.browser }}  # Fix: unique name per browser
+          name: cypress-videos-${{ matrix.browser }}
           path: cypress/videos
           retention-days: 7
+          if-no-files-found: warn  # Warn if no videos
 
