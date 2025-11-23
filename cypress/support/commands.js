@@ -65,3 +65,83 @@ Cypress.Commands.add('getBoard', (boardId) => {
     });
 });
 
+// Create a new board
+Cypress.Commands.add('createBoard', (name, options = {}) => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    return cy.request({
+        method: 'POST',
+        url: `https://api.trello.com/1/boards/?key=${apiKey}&token=${apiToken}&name=${encodeURIComponent(name)}`,
+        body: options,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        // Remove cy.log() - can't mix with return
+        return response.body;
+    });
+});
+
+// Update a board
+Cypress.Commands.add('updateBoard', (boardId, updates) => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    return cy.request({
+        method: 'PUT',
+        url: `https://api.trello.com/1/boards/${boardId}?key=${apiKey}&token=${apiToken}`,
+        body: updates,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        return response.body;
+    });
+});
+
+// Delete a board
+Cypress.Commands.add('deleteBoard', (boardId) => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    return cy.request({
+        method: 'DELETE',
+        url: `https://api.trello.com/1/boards/${boardId}?key=${apiKey}&token=${apiToken}`,
+        failOnStatusCode: false
+    }).then((response) => {
+        // Don't add cy.log here either
+        return response.body;
+    });
+});
+
+// Create a list on a board
+Cypress.Commands.add('createList', (boardId, name) => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    return cy.request({
+        method: 'POST',
+        url: `https://api.trello.com/1/lists?key=${apiKey}&token=${apiToken}&name=${encodeURIComponent(name)}&idBoard=${boardId}`,
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        return response.body;
+    });
+});
+
+// Get all lists on a board
+Cypress.Commands.add('getBoardLists', (boardId) => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    return cy.request({
+        method: 'GET',
+        url: `https://api.trello.com/1/boards/${boardId}/lists?key=${apiKey}&token=${apiToken}`,
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        return response.body;
+    });
+});
+
