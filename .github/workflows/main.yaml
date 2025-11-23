@@ -11,9 +11,9 @@ jobs:
   cypress-run:
     runs-on: ubuntu-latest
     strategy:
-      failfast: false
-        matrix:
-          browser: [chrome, firefox, edge, electron]
+      fail-fast: false  
+      matrix:
+        browser: [chrome, firefox, edge, electron]
     
     steps:
       - name: Checkout code
@@ -38,14 +38,42 @@ jobs:
           TRELLO_API_TOKEN: ${{ secrets.TRELLO_API_TOKEN }}
         with:
           browser: ${{ matrix.browser }}
+          # Remove 'command:' - cypress-io/github-action handles this
           headed: false
           config-file: cypress.config.js
+    
+      # Mochawesome setup needs dependencies installed first
+      - name: Install Mochawesome dependencies
+        run: npm install --save-dev mochawesome mochawesome-merge mochawesome-report-generator
+
+      # Merge JSON reports from all specs
+      - name: Merge Mochawesome reports
+        if: always()
+        run: |
+          npx mochawesome-merge cypress/reports/${{ matrix.browser }}/*.json > cypress/reports/${{ matrix.browser }}/merged-report.json
+
+      # Generate HTML report
+      - name: Generate HTML Reports
+        if: always()
+        run: |
+          npx marge cypress/reports/${{ matrix.browser }}/merged-report.json \
+            --reportDir cypress/reports/${{ matrix.browser }} \
+            --reportFilename "${{ matrix.browser }}-report" \
+            --inline
+
+      - name: Upload HTML Reports
+        uses: actions/upload-artifact@v4
+        if: always()  # Add this to upload even if tests fail
+        with:
+          name: cypress-report-${{ matrix.browser }}  # Fix: unique name per browser
+          path: cypress/reports/${{ matrix.browser }}
+          retention-days: 30
 
       - name: Upload screenshots on failure
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: cypress-screenshots
+          name: cypress-screenshots-${{ matrix.browser }}  # Fix: unique name per browser
           path: cypress/screenshots
           retention-days: 7
 
@@ -53,14 +81,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cypress-videos
+          name: cypress-videos-${{ matrix.browser }}  # Fix: unique name per browser
           path: cypress/videos
           retention-days: 7
 
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cypress-results
-          path: cypress/reports
-          retention-days: 30
