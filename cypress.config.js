@@ -1,18 +1,23 @@
 const { defineConfig } = require('cypress');
+const path = require('path');
+
+// Explicitly load .env from this directory
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 module.exports = defineConfig({
-  reporter: 'cypress-mochawesome-reporter',
-  reporterOptions: {
-    charts: true,
-    reportPageTitle: 'Cypress Practices Test Report',
-    embeddedScreenshots: true,
-    inlineAssets: true,
-    saveAllAttempts: false,
-    autoOpen: true
-  },
   e2e: {
+    baseUrl: 'https://trello.com',
     setupNodeEvents(on, config) {
-      require('cypress-mochawesome-reporter/plugin')(on);
+      config.env.TRELLO_EMAIL = process.env.TRELLO_EMAIL;
+      config.env.TRELLO_PASSWORD = process.env.TRELLO_PASSWORD;
+      config.env.TRELLO_API_KEY = process.env.TRELLO_API_KEY;
+      config.env.TRELLO_API_TOKEN = process.env.TRELLO_API_TOKEN;
+
+      // Debug: verify token is loaded correctly
+      console.log('Loading .env from:', path.resolve(__dirname, '.env'));
+      console.log('Loaded API Token:', process.env.TRELLO_API_TOKEN?.substring(0, 15) + '...');
+
+      return config;
     },
   },
 });

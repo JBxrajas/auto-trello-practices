@@ -1,29 +1,3 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-
 Cypress.Commands.add('NegativeLoginScenario',(email,password)=>{
     cy.visit('https://trello.com');
     cy.contains('Log in').click();
@@ -37,3 +11,57 @@ Cypress.Commands.add('NegativeLoginScenario',(email,password)=>{
     cy.get('div[data-testid="form-error--content"]').should('be.visible');
     });
 });
+
+Cypress.Commands.add('loginViaAPI', () => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    if (!apiKey || !apiToken) {
+        throw new Error('TRELLO_API_KEY or TRELLO_API_TOKEN not set in environment');
+    }
+
+    cy.log(`Verifying API credentials...`);
+
+    // Verify token works and get user info
+    return cy.request({
+        method: 'GET',
+        url: `https://api.trello.com/1/members/me?key=${apiKey}&token=${apiToken}`,
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        
+        // Store credentials in Cypress env for later use
+        Cypress.env('authenticatedUser', response.body);
+        
+        // Return user object directly (no cy commands after this)
+        return response.body;
+    });
+});
+
+// Add a command to get boards via API
+Cypress.Commands.add('getBoards', () => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    return cy.request({
+        method: 'GET',
+        url: `https://api.trello.com/1/members/me/boards?key=${apiKey}&token=${apiToken}`,
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        return response.body;
+    });
+});
+
+// Add a command to get a specific board
+Cypress.Commands.add('getBoard', (boardId) => {
+    const apiKey = Cypress.env('TRELLO_API_KEY');
+    const apiToken = Cypress.env('TRELLO_API_TOKEN');
+
+    return cy.request({
+        method: 'GET',
+        url: `https://api.trello.com/1/boards/${boardId}?key=${apiKey}&token=${apiToken}`,
+    }).then((response) => {
+        expect(response.status).to.eq(200);
+        return response.body;
+    });
+});
+
