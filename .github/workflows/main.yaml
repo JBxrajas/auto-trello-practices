@@ -16,10 +16,6 @@ permissions:
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chrome, firefox, edge, electron]
     
     steps:
       - name: Checkout code
@@ -34,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Cypress in ${{ matrix.browser }}
+      - name: Run Cypress in Chrome
         uses: cypress-io/github-action@v6
         env:
           TRELLO_EMAIL: ${{ secrets.TRELLO_EMAIL }}
@@ -42,7 +38,7 @@ jobs:
           TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
           TRELLO_API_TOKEN: ${{ secrets.TRELLO_API_TOKEN }}
         with:
-          browser: ${{ matrix.browser }}
+          browser: chrome
           headed: false
           config-file: cypress.config.js
 
@@ -57,8 +53,8 @@ jobs:
         if: always()
         run: |
           if [ -d "cypress/reports" ] && [ "$(find cypress/reports -name '*.json' | wc -l)" -gt 0 ]; then
-            mkdir -p cypress/reports/${{ matrix.browser }}
-            npx mochawesome-merge "cypress/reports/*.json" > cypress/reports/${{ matrix.browser }}/merged-report.json
+            mkdir -p cypress/reports/chrome
+            npx mochawesome-merge "cypress/reports/*.json" > cypress/reports/chrome/merged-report.json
             echo "Reports merged successfully"
           else
             echo "No reports to merge - skipping"
@@ -67,10 +63,10 @@ jobs:
       - name: Generate HTML Reports
         if: always()
         run: |
-          if [ -f "cypress/reports/${{ matrix.browser }}/merged-report.json" ]; then
-            npx marge cypress/reports/${{ matrix.browser }}/merged-report.json \
-              --reportDir cypress/reports/${{ matrix.browser }} \
-              --reportFilename "${{ matrix.browser }}-report" \
+          if [ -f "cypress/reports/chrome/merged-report.json" ]; then
+            npx marge cypress/reports/chrome/merged-report.json \
+              --reportDir cypress/reports/chrome \
+              --reportFilename "index" \
               --inline
             echo "HTML report generated"
           else
@@ -81,8 +77,8 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cypress-report-${{ matrix.browser }}
-          path: cypress/reports/${{ matrix.browser }}
+          name: cypress-report
+          path: cypress/reports/chrome
           retention-days: 30
           if-no-files-found: warn
 
@@ -90,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: cypress-screenshots-${{ matrix.browser }}
+          name: cypress-screenshots
           path: cypress/screenshots
           retention-days: 7
           if-no-files-found: ignore
@@ -99,24 +95,23 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cypress-videos-${{ matrix.browser }}
+          name: cypress-videos
           path: cypress/videos
           retention-days: 7
           if-no-files-found: warn
 
-  # New job: Publish reports to GitHub Pages
+  # Publish reports to GitHub Pages
   publish-reports:
     needs: cypress-run
     runs-on: ubuntu-latest
     if: always() # Run even if tests fail
     
     steps:
-      - name: Download all reports
+      - name: Download report
         uses: actions/download-artifact@v4
         with:
-          pattern: cypress-report-*
+          name: cypress-report
           path: reports
-          merge-multiple: true
 
       - name: Create index page
         run: |
@@ -126,77 +121,12 @@ jobs:
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Cypress Test Reports</title>
-              <style>
-                  body { 
-                      font-family: Arial, sans-serif; 
-                      max-width: 1200px; 
-                      margin: 50px auto; 
-                      padding: 20px;
-                      background: #f5f5f5;
-                  }
-                  h1 { color: #333; }
-                  .reports { 
-                      display: grid; 
-                      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-                      gap: 20px; 
-                      margin-top: 30px;
-                  }
-                  .report-card {
-                      background: white;
-                      border-radius: 8px;
-                      padding: 20px;
-                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                      transition: transform 0.2s;
-                  }
-                  .report-card:hover {
-                      transform: translateY(-5px);
-                      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-                  }
-                  .report-card a {
-                      text-decoration: none;
-                      color: #0066cc;
-                      font-size: 18px;
-                      font-weight: bold;
-                  }
-                  .browser-icon {
-                      font-size: 48px;
-                      margin-bottom: 10px;
-                  }
-                  .timestamp {
-                      color: #666;
-                      font-size: 14px;
-                      margin-top: 10px;
-                  }
-              </style>
+              <title>Cypress Test Report</title>
+              <meta http-equiv="refresh" content="0; url=./index.html">
           </head>
           <body>
-              <h1>🧪 Cypress Test Reports</h1>
-              <p>Generated on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")</p>
-              <p>Branch: ${{ github.ref_name }} | Commit: ${{ github.sha }} </p>
-              
-              <div class="reports">
-                  <div class="report-card">
-                      <div class="browser-icon">🌐</div>
-                      <a href="chrome/chrome-report.html">Chrome Report</a>
-                      <div class="timestamp">Latest run</div>
-                  </div>
-                  <div class="report-card">
-                      <div class="browser-icon">🦊</div>
-                      <a href="firefox/firefox-report.html">Firefox Report</a>
-                      <div class="timestamp">Latest run</div>
-                  </div>
-                  <div class="report-card">
-                      <div class="browser-icon">🌊</div>
-                      <a href="edge/edge-report.html">Edge Report</a>
-                      <div class="timestamp">Latest run</div>
-                  </div>
-                  <div class="report-card">
-                      <div class="browser-icon">⚡</div>
-                      <a href="electron/electron-report.html">Electron Report</a>
-                      <div class="timestamp">Latest run</div>
-                  </div>
-              </div>
+              <p>Redirecting to test report...</p>
+              <a href="./index.html">Click here if not redirected</a>
           </body>
           </html>
           EOF
@@ -222,6 +152,6 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '📊 **Test Report Published!**\n\nView reports at: ${{ steps.deployment.outputs.page_url }}'
+              body: '📊 **Test Report Published!**\n\nView report at: ${{ steps.deployment.outputs.page_url }}'
             })
 
