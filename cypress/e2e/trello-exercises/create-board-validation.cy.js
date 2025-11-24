@@ -1,5 +1,9 @@
 describe('Trello Board Creation and Navigation', () => {
     let createdBoardId;
+    beforeEach(function() {
+        // Ensure user is logged in before each test
+        cy.loginViaAPI();
+    });
 
     afterEach(function() {
         // Cleanup: delete the board after each test
@@ -10,7 +14,6 @@ describe('Trello Board Creation and Navigation', () => {
     });
 
     it('should create a board via API', () => {
-        cy.loginViaAPI();
         
         const boardName = `Test Board ${Date.now()}`;
         cy.createBoard(boardName).then((board) => {
@@ -24,7 +27,6 @@ describe('Trello Board Creation and Navigation', () => {
     });
 
     it('should create a board and verify it appears in user boards list', () => {
-        cy.loginViaAPI();
         
         const boardName = `Test Board ${Date.now()}`;
         cy.createBoard(boardName).then((board) => {
@@ -40,7 +42,7 @@ describe('Trello Board Creation and Navigation', () => {
     });
 
     it('should create a board with description and verify via API', () => {
-        cy.loginViaAPI();
+ 
         
         const boardName = `Test Board ${Date.now()}`;
         const description = 'This is a test board created by Cypress automation';
@@ -59,7 +61,6 @@ describe('Trello Board Creation and Navigation', () => {
     });
 
     it('should create a private board and verify visibility settings', () => {
-        cy.loginViaAPI();
         
         const boardName = `Private Board ${Date.now()}`;
         cy.createBoard(boardName, { prefs_permissionLevel: 'private' }).then((board) => {
@@ -76,7 +77,6 @@ describe('Trello Board Creation and Navigation', () => {
     });
 
     it('should create multiple boards and verify count', () => {
-        cy.loginViaAPI();
         
         const boardNames = [
             `Board 1 - ${Date.now()}`,
