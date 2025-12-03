@@ -67,6 +67,20 @@ Cypress.Commands.add('getBoard', (boardId) => {
 
 // Create a new board
 Cypress.Commands.add('createBoard', (name, options = {}) => {
+    // Check if we're in mock mode
+    if (Cypress.env('MOCK_MODE')) {
+        const mockedBoard = {
+            id: 'mockedBoardId123',
+            name: name,
+            desc: options.desc || '',
+            url: 'https://trello.com/b/mocked',
+            prefs: { permissionLevel: 'private' },
+            closed: false
+        };
+        return cy.wrap(mockedBoard);
+    }
+
+    // Real API call
     const apiKey = Cypress.env('TRELLO_API_KEY');
     const apiToken = Cypress.env('TRELLO_API_TOKEN');
 
@@ -79,7 +93,6 @@ Cypress.Commands.add('createBoard', (name, options = {}) => {
         }
     }).then((response) => {
         expect(response.status).to.eq(200);
-        // Remove cy.log() - can't mix with return
         return response.body;
     });
 });

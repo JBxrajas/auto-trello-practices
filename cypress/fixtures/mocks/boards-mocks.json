@@ -1,0 +1,23 @@
+[
+  {
+    "id": "mockBoard_1",
+    "name": "Project Alpha",
+    "desc": "Alpha project board",
+    "prefs": { "permissionLevel": "private" },
+    "url": "https://trello.com/b/mockAlpha"
+  },
+  {
+    "id": "mockBoard_2",
+    "name": "Team Planning",
+    "desc": "Sprint planning and roadmap",
+    "prefs": { "permissionLevel": "org" },
+    "url": "https://trello.com/b/mockPlanning"
+  },
+  {
+    "id": "mockBoard_3",
+    "name": "QA Validation",
+    "desc": "",
+    "prefs": { "permissionLevel": "public" },
+    "url": "https://trello.com/b/mockQA"
+  }
+]
